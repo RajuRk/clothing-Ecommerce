@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,11 +34,13 @@ export default function RootLayout({
       {/* 2. Added a light gray background and default text color to body */}
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
         {/* 1. Global Navigation Bar */}
-        <Navbar />
-        {/* 2. Main Page Content (Changes based on URL path) */}
-        <main className="flex-grow">{children}</main>
-        {/* 3. Global Footer */}
-        <Footer />
+        <Providers>
+          <Navbar />
+          {/* 2. Main Page Content (Changes based on URL path) */}
+          <main className="flex-grow">{children}</main>
+          {/* 3. Global Footer */}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

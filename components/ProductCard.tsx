@@ -4,19 +4,31 @@ import React from "react";
 import Link from "next/link";
 import { Star, ShoppingBag } from "lucide-react";
 import { Product } from "@/data/products";
+import { useCartStore } from "@/store/useCartStore"; // 1. Import Zustand store
+import { toast } from "react-toastify"; // 2. Import Toastify
 
 interface ProductCardProps {
   product: Product;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const addItem = useCartStore((state) => state.addItem);
+
   const handleAddToBag = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevents clicking the button from navigating to the details page
 
-    // Temporary alert until we build the Zustand cart store
-    alert(
-      `Added ${product.brand} - ${product.name} (Size: ${product.sizes[0]}) to your Bag!`,
-    );
+    // 3. Call the Zustand store action
+    addItem({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      discountPrice: product.discountPrice,
+      image: product.images[0],
+      size: product.sizes[0], // Quick-add card defaults to first available size (e.g., "M")
+    });
+    // 4. Pop up a success toast notification
+    toast.success(`${product.brand} - Added to Bag!`);
   };
 
   return (

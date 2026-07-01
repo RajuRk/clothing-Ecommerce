@@ -11,11 +11,12 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
+import { useCartStore } from "@/store/useCartStore";
+import { toast } from "react-toastify";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-
   // 1. Read the product ID from the dynamic URL (e.g. /products/2 -> params.id is "2")
   const productId = Number(params.id);
 
@@ -27,6 +28,8 @@ export default function ProductDetailPage() {
   );
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+  const addItem = useCartStore((state) => state.addItem);
+
   // Fallback: If the user manually typed a wrong URL or ID doesn't exist
   if (!product) {
     return (
@@ -37,7 +40,7 @@ export default function ProductDetailPage() {
         </p>
         <button
           onClick={() => router.push("/products")}
-          className="mt-6 rounded-md bg-pink-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-pink-700"
+          className="mt-6 rounded-md bg-pink-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-pink-700 cursor-pointer"
         >
           Back to Shopping
         </button>
@@ -50,7 +53,18 @@ export default function ProductDetailPage() {
       alert("Please select a size before adding to the bag!");
       return;
     }
-    alert(`Added to Bag! Brand: ${product.brand}, Size: ${selectedSize}`);
+
+    addItem({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      discountPrice: product.discountPrice,
+      image: product.images[0],
+      size: selectedSize,
+    });
+
+    toast.success(`${product.brand} (Size: ${selectedSize}) added to Bag!`);
   };
 
   return (

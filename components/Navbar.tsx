@@ -12,6 +12,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useCartStore } from "@/store/useCartStore";
 
 export const Navbar = () => {
   const router = useRouter();
@@ -22,7 +23,8 @@ export const Navbar = () => {
   const { user, logout } = useAuth();
 
   // Temporary mock values for cart and wishlist (we will connect Zustand next!)
-  const cartCount = 0;
+  const cartCount = useCartStore((state) => state.getCartCount());
+  const toggleCart = useCartStore((state) => state.toggleCart);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +151,7 @@ export const Navbar = () => {
           </Link>
           {/* Shopping Bag Icon */}
           <button
-            onClick={() => alert("Cart Drawer will open here later!")}
+            onClick={() => toggleCart(true)}
             className="relative flex flex-col items-center justify-center text-gray-700 hover:text-pink-600 transition"
           >
             <div className="relative">

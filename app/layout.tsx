@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Providers } from "./providers";
+import { CartDrawer } from "../components/CartDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           <main className="flex-grow">{children}</main>
           {/* 3. Global Footer */}
           <Footer />
+          <CartDrawer />
         </Providers>
       </body>
     </html>

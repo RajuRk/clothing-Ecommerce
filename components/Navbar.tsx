@@ -2,16 +2,27 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Search, User, Heart, ShoppingBag, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  User,
+  Heart,
+  ShoppingBag,
+  LogOut,
+  ShieldAlert,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export const Navbar = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const cartCount = 3;
-  const isLoggedIn = false;
+  // 2. Destructure real user and logout action from AuthContext
+  const { user, logout } = useAuth();
+
+  // Temporary mock values for cart and wishlist (we will connect Zustand next!)
+  const cartCount = 0;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,20 +88,54 @@ export const Navbar = () => {
               className="flex flex-col items-center justify-center text-gray-700 hover:text-pink-600 transition"
             >
               <User className="h-6 w-6" />
-              <span className="hidden sm:block text-[10px] font-bold mt-0.5">
-                Profile
+              {/* Show the user's first name if logged in, otherwise "Profile" */}
+              <span className="hidden sm:block text-[10px] font-bold mt-0.5 max-w-[60px] truncate text-center">
+                {user ? user.name.split(" ")[0] : "Profile"}
               </span>
             </button>
             {/* Profile Dropdown (Static Toggle) */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <Link
-                  href="/login"
-                  onClick={() => setIsProfileMenuOpen(false)}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-semibold"
-                >
-                  Log In / Sign Up
-                </Link>
+              <div className="absolute right-0 mt-3 w-52 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                {user ? (
+                  // Logged In Options
+                  <>
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wide">
+                        Logged in as ({user.role})
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 truncate mt-0.5">
+                        {user.email}
+                      </p>
+                    </div>
+                    {/* Admin Dashboard link (Only visible to admin role) */}
+                    {user.role === "admin" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="flex w-full items-center px-4 py-2 text-sm text-pink-600 hover:bg-pink-50 font-bold"
+                      >
+                        <ShieldAlert className="mr-2 h-4 w-4" /> Admin Panel
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-50 font-semibold"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-semibold"
+                  >
+                    Log In / Sign Up
+                  </Link>
+                )}
               </div>
             )}
           </div>

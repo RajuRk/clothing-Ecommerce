@@ -2,13 +2,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import LinkNext from "next/link";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Check } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuth();
+  const { login, signup, isLoading } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -58,34 +58,23 @@ export default function LoginPage() {
     const tempErrors: typeof errors = {};
     let isValid = true;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!email.trim()) {
-      tempErrors.email = "Email address is required";
-      isValid = false;
-    } else if (!emailRegex.test(email)) {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       tempErrors.email = "Please enter a valid email address";
       isValid = false;
     }
-
-    // Password validation (Min length check)
-    if (!password) {
-      tempErrors.password = "Password is required";
-      isValid = false;
-    } else if (password.length < 6) {
-      tempErrors.password = "Password must be at least 6 characters long";
-      isValid = false;
-    }
-
-    // Name validation (Sign-up only, min length check)
     if (isSignUp) {
-      if (!name.trim()) {
-        tempErrors.name = "Full name is required";
-        isValid = false;
-      } else if (name.trim().length < 3) {
-        tempErrors.name = "Name must be at least 3 characters long";
+      if (name.trim().length < 3) {
+        tempErrors.name = "Name must be at least 3 characters";
         isValid = false;
       }
+      if (metCount < 5) {
+        tempErrors.password =
+          "Password does not meet all security requirements";
+        isValid = false;
+      }
+    } else if (password.length < 6) {
+      tempErrors.password = "Password must be at least 6 characters";
+      isValid = false;
     }
 
     setErrors(tempErrors);
@@ -102,10 +91,12 @@ export default function LoginPage() {
       return;
     }
 
-    // Call the login context function.
-    // If it's a Sign Up, we pass the user's name. If it's a Login, we pass empty string.
-    const success = await login(email, isSignUp ? name : "");
-
+    let success = false;
+    if (isSignUp) {
+      success = await signup(name, email, password); // Call signup
+    } else {
+      success = await login(email, password); // Call login
+    }
     if (success) {
       router.push("/");
     }
@@ -249,6 +240,40 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
+
+            {/* 2. Real-time Password Strength indicator (Only for Sign Up) */}
+            {isSignUp && password && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-gray-500">Strength:</span>
+                  <span className={strength.text}>{strength.label}</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${strength.color}`}
+                  />
+                </div>
+                {/* Dynamic Rules checklist */}
+                <div className="grid grid-cols-2 gap-2 mt-3 text-xs bg-gray-50 p-3 rounded-md">
+                  {pwdRules.map((rule, idx) => (
+                    <div key={idx} className="flex items-center space-x-1.5">
+                      <Check
+                        className={`h-3.5 w-3.5 ${rule.met ? "text-emerald-500" : "text-gray-300"}`}
+                      />
+                      <span
+                        className={
+                          rule.met
+                            ? "text-emerald-600 font-medium"
+                            : "text-gray-400"
+                        }
+                      >
+                        {rule.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Large Main CTA Button */}

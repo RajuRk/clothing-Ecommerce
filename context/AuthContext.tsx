@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { POST } from "../app/api/products/route";
 
 // 1. Define the User type structure (including the new "role" parameter)
 export interface User {
@@ -18,6 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, name: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
   // Updated: logout and signup now properly accept a `role` parameter
   logout: () => Promise<void>;
 }
@@ -30,16 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sync session on browser reload
   useEffect(() => {
-    const savedUser = localStorage.getItem("fashionhub_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = localStorage.getItem("fashionhub_user");
+      if (savedUser && savedUser !== "undefined") {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.error("Failed to parse saved user session:", error);
+      // Clean up corrupt storage if parsing fails
+      localStorage.removeItem("fashionhub_user");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, []);
 
   // Real backend call: sends a POST request to `/api/auth/login`
-  const login = async (email: string, name: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/login", {
@@ -47,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
@@ -66,6 +74,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Login API Error:", error);
       toast.error("Failed to connect to the login server."); // Error Toast!
+      setIsLoading(false);
+      return false;
+    }
+  };
+
+  // 2. Added Signup (passes name, email, and password to /api/auth/signup)
+  const signup = async (
+    name: string,
+    email: string,
+    password: string,
+  ): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUser(data.user);
+        localStorage.setItem("fashionhub_user", JSON.stringify(data.user));
+        setIsLoading(false);
+        toast.success(
+          `Account created successfully! Welcome, ${data.user.name}!`,
+        );
+        return true;
+      } else {
+        toast.error(data.error || "Signup failed");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error("Signup API Error:", error);
+      toast.error("Failed to connect to the registration server.");
       setIsLoading(false);
       return false;
     }
@@ -91,7 +136,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, login, logout }}
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        signup,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
